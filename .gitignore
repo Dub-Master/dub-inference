@@ -1,3 +1,5 @@
+secret*.py
+
 .DS_Store
 *.m4a
 *.mp4

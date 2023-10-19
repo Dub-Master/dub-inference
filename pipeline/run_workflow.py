@@ -1,5 +1,6 @@
 import asyncio
 
+from common.constants import TEMPORAL_URL
 from temporalio.client import Client
 
 # from workers.encoding.workflows import EncodingWorkflow
@@ -7,7 +8,7 @@ from temporalio.client import Client
 
 async def main():
     # Create client connected to server at the given address
-    client = await Client.connect("localhost:7233")
+    client = await Client.connect(TEMPORAL_URL)
 
     # Execute a workflow
     result = await client.execute_workflow(

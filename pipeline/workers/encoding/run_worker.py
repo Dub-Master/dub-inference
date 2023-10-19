@@ -1,19 +1,19 @@
-from dotenv import load_dotenv
-load_dotenv()
-
-import asyncio
-
-from activities import download_video
-from translate_activity import translate
+from workflows import EncodingWorkflow, TextToSpeechWorkflow, TranslateWorkflow
 from voice_clone_activity import text_to_speech
-from temporalio import activity, workflow
-from temporalio.client import Client
+from translate_activity import translate
 from temporalio.worker import Worker
-from workflows import EncodingWorkflow, TranslateWorkflow, TextToSpeechWorkflow
+from temporalio.client import Client
+from temporalio import activity, workflow
+from common.constants import TEMPORAL_URL
+from activities import download_video
+import asyncio
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 async def main():
-    client = await Client.connect("localhost:7233", namespace="default")
+    client = await Client.connect(TEMPORAL_URL, namespace="default")
     # Run the worker
     worker = Worker(
         client,
@@ -34,8 +34,8 @@ async def main():
         activities=[text_to_speech],
     )
     futures = [
-        worker.run(), 
-        translate_worker.run(), 
+        worker.run(),
+        translate_worker.run(),
         text_to_speech_worker.run()
     ]
     await asyncio.gather(*futures)
