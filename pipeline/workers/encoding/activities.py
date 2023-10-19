@@ -10,12 +10,14 @@ from yt_dlp import YoutubeDL
 # return url of video
 
 ydl_opts = {
-    "format": "m4a/bestaudio/best",
+    "format": "mp4/bestvideo*+m4a/bestaudio/best",
+    "keepvideo": True,
+    # "remux-video": "mp4",
     # ℹ️ See help(yt_dlp.postprocessor) for a list of available Postprocessors and their arguments
     "postprocessors": [
         {  # Extract audio using ffmpeg
             "key": "FFmpegExtractAudio",
-            "preferredcodec": "m4a",
+            "preferredcodec": "wav",
         }
     ],
 }
@@ -27,8 +29,8 @@ async def download_video(url: str) -> str:
     urls = [url]
     with YoutubeDL(ydl_opts) as ydl:
         ydl.download(urls)
-    info = ydl.extract_info(url, download=False)
-    print(json.dumps(ydl.sanitize_info(info)))
+    # info = ydl.extract_info(url, download=False)
+    # print(json.dumps(ydl.sanitize_info(info)))
     return f"Hello, {url}!"
 
 
