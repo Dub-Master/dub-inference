@@ -1,7 +1,8 @@
 import asyncio
 
 from temporalio.client import Client
-from workflows import EncodingWorkflow
+
+# from workers.encoding.workflows import EncodingWorkflow
 
 
 async def main():
@@ -10,7 +11,7 @@ async def main():
 
     # Execute a workflow
     result = await client.execute_workflow(
-        EncodingWorkflow.handle_media,
+        "EncodingWorkflow",
         "Temporal",
         id="encoding-workflow",
         task_queue="encoding-task-queue",
