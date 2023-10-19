@@ -2,7 +2,7 @@ import asyncio
 
 from temporalio.client import Client
 
-from run_worker import SayHello
+# from workers.encoding.workflows import EncodingWorkflow
 
 
 async def main():
@@ -11,7 +11,10 @@ async def main():
 
     # Execute a workflow
     result = await client.execute_workflow(
-        SayHello.run, "Temporal", id="hello-workflow", task_queue="hello-task-queue"
+        "EncodingWorkflow",
+        "Temporal",
+        id="encoding-workflow",
+        task_queue="encoding-task-queue",
     )
 
     print(f"Result: {result}")

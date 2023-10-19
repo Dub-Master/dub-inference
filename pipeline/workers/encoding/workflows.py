@@ -1,16 +1,17 @@
 from datetime import timedelta
+from typing import Tuple
 
 from temporalio import workflow
 
 # Import activity, passing it through the sandbox without reloading the module
 with workflow.unsafe.imports_passed_through():
-    from activities import say_hello
+    from activities import download_video
 
 
 @workflow.defn
-class SayHello:
+class EncodingWorkflow:
     @workflow.run
-    async def run(self, name: str) -> str:
+    async def handle_media(self, url: str) -> str:
         return await workflow.execute_activity(
-            say_hello, name, start_to_close_timeout=timedelta(seconds=5)
+            download_video, url, start_to_close_timeout=timedelta(minutes=5)
         )
