@@ -1,13 +1,14 @@
-from workflows import EncodingWorkflow, TextToSpeechWorkflow, TranslateWorkflow
-from voice_clone_activity import text_to_speech
-from translate_activity import translate
-from temporalio.worker import Worker
-from temporalio.client import Client
-from temporalio import activity, workflow
-from common.constants import TEMPORAL_URL
-from activities import download_video
 import asyncio
+
+from activities import download_video, upload_file_to_s3
+from common.constants import TEMPORAL_URL
 from dotenv import load_dotenv
+from temporalio import activity, workflow
+from temporalio.client import Client
+from temporalio.worker import Worker
+from translate_activity import translate
+from voice_clone_activity import text_to_speech
+from workflows import EncodingWorkflow, TextToSpeechWorkflow, TranslateWorkflow
 
 load_dotenv()
 
@@ -19,7 +20,7 @@ async def main():
         client,
         task_queue="encoding-task-queue",
         workflows=[EncodingWorkflow],
-        activities=[download_video],
+        activities=[download_video, upload_file_to_s3],
     )
     translate_worker = Worker(
         client,
