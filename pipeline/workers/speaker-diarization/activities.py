@@ -2,10 +2,12 @@ import os
 
 import boto3
 from botocore.client import ClientError
-
-# todo: run fully locally w/o HF (https://github.com/pyannote/pyannote-audio/issues/910)
+from dotenv import load_dotenv
 from pyannote.audio import Pipeline
 from temporalio import activity
+
+load_dotenv()
+# todo: run fully locally w/o HF (https://github.com/pyannote/pyannote-audio/issues/910)
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
