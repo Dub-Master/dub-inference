@@ -1,14 +1,9 @@
 import asyncio
 import os
 
-
 from dotenv import load_dotenv
-
 from temporalio.client import Client
-from workers.encoding.params import StitchAudioParams, AudioSegment
-
-
-load_dotenv()
+from workers.common.params import AudioSegment, StitchAudioParams
 
 
 async def main():

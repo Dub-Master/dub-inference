@@ -2,7 +2,7 @@ import asyncio
 import os
 
 from temporalio.client import Client
-from workers.encoding.params import TextToSpeechParams
+from workers.common.params import TextToSpeechParams
 
 
 async def main():

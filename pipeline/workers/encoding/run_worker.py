@@ -1,15 +1,22 @@
 import asyncio
 import os
 
-from activities import download_video, upload_file_to_s3
+from activities import download_video
 from dotenv import load_dotenv
-from temporalio import activity, workflow
+from media_activity import (
+    create_audio_segments,
+    download_audio_from_s3,
+    upload_file_to_s3,
+)
+from stitch_activity import stitch_audio
+
+# from temporalio import activity, workflow
 from temporalio.client import Client
 from temporalio.worker import Worker
+from transcribe_activity import transcribe
 from translate_activity import translate
-from voice_clone_activity import text_to_speech, clone_voice, delete_voice
-from stitch_activity import stitch_audio
-from workflows import EncodingWorkflow, TextToSpeechWorkflow, TranslateWorkflow, CloneVoiceWorkflow, DeleteVoiceWorkflow, StitchAudioWorkflow
+from voice_clone_activity import clone_voice, delete_voice, text_to_speech
+from workflows import CoreWorkflow, EncodingWorkflow
 
 load_dotenv()
 
@@ -23,44 +30,39 @@ async def main():
         workflows=[EncodingWorkflow],
         activities=[download_video, upload_file_to_s3],
     )
-    translate_worker = Worker(
+    core_worker = Worker(
         client,
-        task_queue="translate-task-queue",
-        workflows=[TranslateWorkflow],
-        activities=[translate],
+        task_queue="core-task-queue",
+        workflows=[CoreWorkflow],
+        activities=[translate, text_to_speech, delete_voice, stitch_audio,
+                    transcribe, download_audio_from_s3, create_audio_segments,
+                    upload_file_to_s3, clone_voice],
     )
-    text_to_speech_worker = Worker(
-        client,
-        task_queue="text-to-speech-task-queue",
-        workflows=[TextToSpeechWorkflow],
-        activities=[text_to_speech],
-    )
-    clone_voice_worker = Worker(
-        client,
-        task_queue="clone-voice-task-queue",
-        workflows=[CloneVoiceWorkflow],
-        activities=[clone_voice],
-    )
-    delete_voice_worker = Worker(
-        client,
-        task_queue="delete-voice-task-queue",
-        workflows=[DeleteVoiceWorkflow],
-        activities=[delete_voice],
-    )
-    stitch_audio_worker = Worker(
-        client,
-        task_queue="stitch-audio-task-queue",
-        workflows=[StitchAudioWorkflow],
-        activities=[stitch_audio],
-    )
+    # stitch_audio_worker = Worker(
+    #     client,
+    #     task_queue="stitch-audio-task-queue",
+    #     workflows=[StitchAudioWorkflow],
+    #     activities=[stitch_audio],
+    # )
+
+    # clone_voice_worker = Worker(
+    #     client,
+    #     task_queue="clone-voice-task-queue",
+    #     workflows=[CloneVoiceWorkflow],
+    #     activities=[clone_voice],
+    # )
+    # delete_voice_worker = Worker(
+    #     client,
+    #     task_queue="delete-voice-task-queue",
+    #     workflows=[DeleteVoiceWorkflow],
+    #     activities=[delete_voice],
+    # )
 
     futures = [
         worker.run(),
-        translate_worker.run(),
-        text_to_speech_worker.run(),
-        clone_voice_worker.run(),
-        delete_voice_worker.run(),
-        stitch_audio_worker.run(),
+        core_worker.run(),
+        # stitch_audio_worker.run(),
+
     ]
     await asyncio.gather(*futures)
 

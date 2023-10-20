@@ -2,7 +2,7 @@ import asyncio
 import os
 
 from temporalio.client import Client
-from workers.encoding.params import CloneVoiceParams
+from workers.common.params import CloneVoiceParams
 
 
 async def main():
