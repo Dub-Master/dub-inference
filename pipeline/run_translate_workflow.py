@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from temporalio.client import Client
 from workers.encoding.params import TranslateParams
@@ -6,7 +7,7 @@ from workers.encoding.params import TranslateParams
 
 async def main():
     # Create client connected to server at the given address
-    client = await Client.connect("localhost:7233")
+    client = await Client.connect(os.getenv("TEMPORAL_URL"))
 
     # Execute a workflow
     result = await client.execute_workflow(
