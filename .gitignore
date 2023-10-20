@@ -2,3 +2,5 @@
 *.m4a
 *.mp4
 *.wav
+
+venv/
