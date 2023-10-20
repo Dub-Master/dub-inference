@@ -20,10 +20,7 @@ conda install portaudio pysoundfile ffmpeg -c conda-forge
 3. Install diart and other packages:
 
 ```shell
-pip install diart
-pip install temporalio
-pip install boto3
-pip install python-dotenv
+pip install diart temporalio boto3 python-dotenv
 ```
 
 ### Get access to 🎹 pyannote models
