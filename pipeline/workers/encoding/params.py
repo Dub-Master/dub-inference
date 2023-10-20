@@ -18,3 +18,14 @@ class CloneVoiceParams:
 @dataclass
 class DeleteVoiceParams:
     voice_id: str
+
+@dataclass
+class AudioSegment:
+    start: float
+    stop: float
+    s3_track: str
+
+@dataclass
+class StitchAudioParams:
+    segments: list[AudioSegment]
+    s3_video_track: str

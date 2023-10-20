@@ -1,12 +1,12 @@
 import os
 
-import boto3
 import requests
 from dotenv import load_dotenv
 from elevenlabs import generate, set_api_key
 from params import TextToSpeechParams, CloneVoiceParams, DeleteVoiceParams
 from temporalio import activity
 import tempfile
+from util import read_s3_file, write_s3_file
 
 
 load_dotenv()
@@ -14,17 +14,7 @@ ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY")
 
 set_api_key(ELEVEN_LABS_API_KEY)
 
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
-AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
 
-s3_client = boto3.client(
-    's3',
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    endpoint_url=AWS_S3_ENDPOINT_URL
-)
 
 
 @activity.defn
@@ -32,7 +22,7 @@ async def text_to_speech(params: TextToSpeechParams) -> str:
     audio_data = generate(params.text, voice=params.voice)
     wokflow_id = activity.info().workflow_run_id
     s3_key = f"output-voice-{wokflow_id}.mp3"
-    s3_client.put_object(Bucket=AWS_S3_BUCKET, Key=s3_key, Body=audio_data)
+    write_s3_file(s3_key, audio_data)
     return s3_key
 
 @activity.defn
@@ -57,10 +47,6 @@ async def clone_voice(params: CloneVoiceParams) -> str:
 @activity.defn
 async def delete_voice(params: DeleteVoiceParams) -> None:
     eleven_labs_delete_voice(params.voice_id)
-
-def read_s3_file(key: str) -> bytes:
-    resp = s3_client.get_object(Bucket=AWS_S3_BUCKET, Key=key)
-    return resp['Body'].read()
 
 # https://docs.elevenlabs.io/api-reference/voices-add
 def eleven_labs_add_voice(voice_name: str, voice_description: str, audio_file_paths: list[str]) -> str:

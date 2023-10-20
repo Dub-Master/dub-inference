@@ -7,9 +7,10 @@ from temporalio import workflow
 with workflow.unsafe.imports_passed_through():
     # from activities import download_video, upload_file_to_s3
     from activities import download_video, upload_file_to_s3
-    from params import TextToSpeechParams, TranslateParams, CloneVoiceParams, DeleteVoiceParams
+    from params import TextToSpeechParams, TranslateParams, CloneVoiceParams, DeleteVoiceParams, StitchAudioParams
     from translate_activity import translate
     from voice_clone_activity import text_to_speech, clone_voice, delete_voice
+    from stitch_activity import stitch_audio
 
 
 @workflow.defn
@@ -68,4 +69,13 @@ class DeleteVoiceWorkflow:
     async def handle(self, params: DeleteVoiceParams) -> None:
         await workflow.execute_activity(
             delete_voice, params, start_to_close_timeout=timedelta(minutes=5)
+        )
+
+
+@workflow.defn
+class StitchAudioWorkflow:
+    @workflow.run
+    async def handle(self, params: StitchAudioParams) -> str:
+        return await workflow.execute_activity(
+            stitch_audio, params, start_to_close_timeout=timedelta(minutes=10)
         )
