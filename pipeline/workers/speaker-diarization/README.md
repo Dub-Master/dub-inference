@@ -23,6 +23,7 @@ conda install portaudio pysoundfile ffmpeg -c conda-forge
 pip install diart
 pip install temporalio
 pip install boto3
+pip install python-dotenv
 ```
 
 ### Get access to 🎹 pyannote models
