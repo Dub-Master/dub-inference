@@ -18,6 +18,6 @@ class DiarizationWorkflow:
 
         diarization = await workflow.execute_activity(
             diarize_audio, filename, start_to_close_timeout=timedelta(
-                minutes=5)
+                minutes=20)
         )
         return diarization

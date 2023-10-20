@@ -1,6 +1,6 @@
 import asyncio
 
-from activities import download_audio_from_s3, download_video
+from activities import download_video, upload_file_to_s3
 from common.constants import TEMPORAL_URL
 from dotenv import load_dotenv
 from temporalio import activity, workflow
@@ -20,7 +20,7 @@ async def main():
         client,
         task_queue="encoding-task-queue",
         workflows=[EncodingWorkflow],
-        activities=[download_video, download_audio_from_s3],
+        activities=[download_video, upload_file_to_s3],
     )
     translate_worker = Worker(
         client,

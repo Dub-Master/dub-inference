@@ -38,11 +38,14 @@ async def download_audio_from_s3(s3_url: str) -> str:
     with open(local_file_path, 'wb') as f:
         s3_client.download_fileobj(bucket_name, object_name, f)
 
+    print(local_file_path)
+
     return local_file_path
 
 
 @activity.defn
 async def diarize_audio(audio_filepath: str) -> dict:
+    print(audio_filepath)
     diarization_output = []
 
     # apply pretrained pipeline
@@ -59,5 +62,5 @@ async def diarize_audio(audio_filepath: str) -> dict:
             }
         )
 
-    os.remove(audio_filepath)
-    return diarization
+    # os.remove(audio_filepath)
+    return diarization_output
