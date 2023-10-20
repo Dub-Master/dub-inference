@@ -16,7 +16,7 @@ async def main():
     # Execute a workflow
     source_data = await client.execute_workflow(
         "EncodingWorkflow",
-        "https://www.youtube.com/watch?v=8ygoE2YiHCs",  # @todo remove this hardcoding
+        "https://www.youtube.com/watch?v=mO568RMJfCI",  # @todo remove this hardcoding
         id="encoding-workflow",
         task_queue="encoding-task-queue",
     )
