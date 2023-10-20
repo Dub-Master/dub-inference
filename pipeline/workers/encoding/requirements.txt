@@ -10,3 +10,7 @@ types-protobuf==4.24.0.2
 typing_extensions==4.8.0
 websockets==11.0.3
 yt-dlp==2023.10.13
+python-dotenv==1.0.0
+openai==0.28.1
+elevenlabs==0.2.26
+boto3==1.28.67
