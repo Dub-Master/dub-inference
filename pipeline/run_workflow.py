@@ -1,14 +1,16 @@
 import asyncio
 
-from common.constants import TEMPORAL_URL
+from dotenv import load_dotenv
 from temporalio.client import Client
 
 # from workers.encoding.workflows import EncodingWorkflow
 
+load_dotenv()
+
 
 async def main():
     # Create client connected to server at the given address
-    client = await Client.connect(TEMPORAL_URL)
+    client = await Client.connect(os.getenv("TEMPORAL_URL"))
 
     # Execute a workflow
     source_data = await client.execute_workflow(
