@@ -20,17 +20,17 @@ class EncodingWorkflow:
             local_video_file_path,
             local_audio_file_path,
         ) = await workflow.execute_activity(
-            download_video, url, start_to_close_timeout=timedelta(minutes=5)
+            download_video, url, start_to_close_timeout=timedelta(minutes=15)
         )
         s3_video_url = await workflow.execute_activity(
             upload_file_to_s3,
             local_video_file_path,
-            start_to_close_timeout=timedelta(minutes=1),
+            start_to_close_timeout=timedelta(minutes=15),
         )
         s3_audio_url = await workflow.execute_activity(
             upload_file_to_s3,
             local_audio_file_path,
-            start_to_close_timeout=timedelta(minutes=1),
+            start_to_close_timeout=timedelta(minutes=15),
         )
         return (s3_video_url, s3_audio_url)
 
