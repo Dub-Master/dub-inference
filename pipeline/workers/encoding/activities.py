@@ -1,21 +1,28 @@
-import json
+import os
+from typing import Tuple
 
+import boto3
+from botocore.client import ClientError
+from dotenv import load_dotenv
 from temporalio import activity
 from yt_dlp import YoutubeDL
 
-# download video using yt-dlp lib
-# extract audio from video
-# convert to mp4 format
-# save to s3
-# return url of video
+load_dotenv()
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
+AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
 
 ydl_opts = {
     "format": "mp4/bestvideo*+m4a/bestaudio/best",
     "keepvideo": True,
-    # "remux-video": "mp4",
-    # ℹ️ See help(yt_dlp.postprocessor) for a list of available Postprocessors and their arguments
+    "outtmpl": "%(id)s.%(ext)s",
+    # "writeinfojson": True,
+    # ℹ️ See help(yt_dlp.postprocessor) for a list of available Postprocessors
+    # and their arguments
     "postprocessors": [
-        {  # Extract audio using ffmpeg
+        {  # Extract audio as wav using ffmpeg
             "key": "FFmpegExtractAudio",
             "preferredcodec": "wav",
         }
@@ -23,27 +30,48 @@ ydl_opts = {
 }
 
 
+def check_bucket_exists(s3_client, bucket_name):
+    bucket_list = s3_client.list_buckets()
+
+    for bucket in bucket_list["Buckets"]:
+        if bucket_name == bucket["Name"]:
+            return True
+
+    return False
+
+
 @activity.defn
-async def download_video(url: str) -> str:
-    url = "https://www.youtube.com/watch?v=8ygoE2YiHCs"
+async def download_video(url: str) -> Tuple:
     urls = [url]
     with YoutubeDL(ydl_opts) as ydl:
         ydl.download(urls)
-    # info = ydl.extract_info(url, download=False)
-    # print(json.dumps(ydl.sanitize_info(info)))
-    return f"Hello, {url}!"
+    info = ydl.extract_info(url, download=False)
+    info_json = ydl.sanitize_info(info)
+    video_id = info_json["id"]
+    return (f"{video_id}.mp4", f"{video_id}.wav")
 
 
-# @activity.defn
-# async def convert_video(url: str) -> str:
-#     return f"Hello, {url}!"
+@activity.defn
+async def upload_file_to_s3(local_file_path: str) -> str:
+    s3_client = boto3.client(
+        "s3",
+        endpoint_url=AWS_S3_ENDPOINT_URL,
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    )
+    # @todo update client initiation to use dot env
 
+    bucket_exists = check_bucket_exists(s3_client, AWS_S3_BUCKET)
+    print(bucket_exists)
+    if not bucket_exists:
+        print("creating bucket")
+        try:
+            s3_client.create_bucket(Bucket=AWS_S3_BUCKET)
+        except ClientError as e:
+            print(e)
+            raise e
+    with open(local_file_path, "rb") as data:
+        s3_client.upload_fileobj(data, AWS_S3_BUCKET, local_file_path)
 
-# @activity.defn
-# async def extract_audio(url: str) -> str:
-#     return f"Hello, {url}!"
-
-
-# @activity.defn
-# async def save_files(url: str) -> str:
-#     return f"Hello, {url}!"
+    os.remove(local_file_path)
+    return "s3://" + AWS_S3_BUCKET + "/" + local_file_path

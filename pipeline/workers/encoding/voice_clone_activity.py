@@ -1,9 +1,12 @@
 import os
-from elevenlabs import set_api_key, generate
-from temporalio import activity
-from params import TextToSpeechParams
-import boto3
 
+import boto3
+from dotenv import load_dotenv
+from elevenlabs import generate, set_api_key
+from params import TextToSpeechParams
+from temporalio import activity
+
+load_dotenv()
 ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY")
 
 set_api_key(ELEVEN_LABS_API_KEY)
@@ -14,11 +17,12 @@ AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
 AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
 
 s3_client = boto3.client(
-    's3', 
-    aws_access_key_id=AWS_ACCESS_KEY_ID, 
+    's3',
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
     endpoint_url=AWS_S3_ENDPOINT_URL
 )
+
 
 @activity.defn
 async def text_to_speech(params: TextToSpeechParams) -> str:
