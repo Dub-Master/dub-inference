@@ -1,4 +1,4 @@
-import json
+import os
 from typing import Tuple
 
 import boto3
@@ -12,9 +12,10 @@ ydl_opts = {
     "keepvideo": True,
     "outtmpl": "%(id)s.%(ext)s",
     # "writeinfojson": True,
-    # ℹ️ See help(yt_dlp.postprocessor) for a list of available Postprocessors and their arguments
+    # ℹ️ See help(yt_dlp.postprocessor) for a list of available Postprocessors
+    # and their arguments
     "postprocessors": [
-        {  # Extract audio using ffmpeg
+        {  # Extract audio as wav using ffmpeg
             "key": "FFmpegExtractAudio",
             "preferredcodec": "wav",
         }
@@ -34,7 +35,6 @@ def check_bucket_exists(s3_client, bucket_name):
 
 @activity.defn
 async def download_video(url: str) -> Tuple:
-    url = "https://www.youtube.com/watch?v=8ygoE2YiHCs"
     urls = [url]
     with YoutubeDL(ydl_opts) as ydl:
         ydl.download(urls)
@@ -66,4 +66,6 @@ async def upload_file_to_s3(local_file_path: str) -> str:
             raise e
     with open(local_file_path, "rb") as data:
         s3_client.upload_fileobj(data, S3_BUCKET, local_file_path)
+
+    os.remove(local_file_path)
     return "s3://" + S3_BUCKET + "/" + local_file_path

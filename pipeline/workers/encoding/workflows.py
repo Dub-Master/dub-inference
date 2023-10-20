@@ -32,7 +32,7 @@ class EncodingWorkflow:
             local_audio_file_path,
             start_to_close_timeout=timedelta(minutes=1),
         )
-        return s3_video_url, s3_audio_url
+        return (s3_video_url, s3_audio_url)
 
 
 @workflow.defn

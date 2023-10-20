@@ -1,12 +1,11 @@
 import asyncio
 
-from activities import diarize_audio
+from activities import diarize_audio, download_audio_from_s3
+from common.constants import TEMPORAL_URL
 from temporalio import activity, workflow
 from temporalio.client import Client
 from temporalio.worker import Worker
 from workflows import DiarizationWorkflow
-
-from ....pipeline.common.constants import TEMPORAL_URL
 
 
 async def main():
@@ -14,9 +13,9 @@ async def main():
     # Run the worker
     worker = Worker(
         client,
-        task_queue="speaker-diarization-task-queue",
+        task_queue="diarization-task-queue",
         workflows=[DiarizationWorkflow],
-        activities=[diarize_audio],
+        activities=[diarize_audio, download_audio_from_s3],
     )
     await worker.run()
 

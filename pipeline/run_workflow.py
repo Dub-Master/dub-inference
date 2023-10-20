@@ -11,14 +11,23 @@ async def main():
     client = await Client.connect(TEMPORAL_URL)
 
     # Execute a workflow
-    result = await client.execute_workflow(
+    source_data = await client.execute_workflow(
         "EncodingWorkflow",
-        "Temporal",
+        "https://www.youtube.com/watch?v=8ygoE2YiHCs",  # @todo remove this hardcoding
         id="encoding-workflow",
         task_queue="encoding-task-queue",
     )
 
-    print(f"Result: {result}")
+    s3_url_audio_file = source_data[1]
+
+    diarization = await client.execute_workflow(
+        "DiarizationWorkflow",
+        s3_url_audio_file,
+        id="diarization-workflow",
+        task_queue="diarization-task-queue",
+    )
+
+    print(f"Result: {diarization}")
 
 
 if __name__ == "__main__":
