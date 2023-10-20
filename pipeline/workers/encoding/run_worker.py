@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from activities import download_video, upload_file_to_s3
 from common.constants import TEMPORAL_URL
@@ -14,7 +15,7 @@ load_dotenv()
 
 
 async def main():
-    client = await Client.connect(TEMPORAL_URL, namespace="default")
+    client = await Client.connect(os.getenv("TEMPORAL_URL"), namespace="default")
     # Run the worker
     worker = Worker(
         client,
