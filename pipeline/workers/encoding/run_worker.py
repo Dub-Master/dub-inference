@@ -7,8 +7,8 @@ from temporalio import activity, workflow
 from temporalio.client import Client
 from temporalio.worker import Worker
 from translate_activity import translate
-from voice_clone_activity import text_to_speech
-from workflows import EncodingWorkflow, TextToSpeechWorkflow, TranslateWorkflow
+from voice_clone_activity import text_to_speech, clone_voice, delete_voice
+from workflows import EncodingWorkflow, TextToSpeechWorkflow, TranslateWorkflow, CloneVoiceWorkflow, DeleteVoiceWorkflow
 
 load_dotenv()
 
@@ -34,10 +34,25 @@ async def main():
         workflows=[TextToSpeechWorkflow],
         activities=[text_to_speech],
     )
+    clone_voice_worker = Worker(
+        client,
+        task_queue="clone-voice-task-queue",
+        workflows=[CloneVoiceWorkflow],
+        activities=[clone_voice],
+    )
+    delete_voice_worker = Worker(
+        client,
+        task_queue="delete-voice-task-queue",
+        workflows=[DeleteVoiceWorkflow],
+        activities=[delete_voice],
+    )
+
     futures = [
         worker.run(),
         translate_worker.run(),
-        text_to_speech_worker.run()
+        text_to_speech_worker.run(),
+        clone_voice_worker.run(),
+        delete_voice_worker.run(),
     ]
     await asyncio.gather(*futures)
 
