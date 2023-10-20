@@ -44,7 +44,7 @@ async def download_audio_from_s3(s3_url: str) -> str:
 
 
 @activity.defn
-async def diarize_audio(audio_filepath: str) -> dict:
+async def diarize_audio(audio_filepath: str) -> list:
     print(audio_filepath)
     diarization_output = []
 
