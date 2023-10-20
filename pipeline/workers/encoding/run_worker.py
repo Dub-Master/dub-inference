@@ -8,7 +8,8 @@ from temporalio.client import Client
 from temporalio.worker import Worker
 from translate_activity import translate
 from voice_clone_activity import text_to_speech, clone_voice, delete_voice
-from workflows import EncodingWorkflow, TextToSpeechWorkflow, TranslateWorkflow, CloneVoiceWorkflow, DeleteVoiceWorkflow
+from stitch_activity import stitch_audio
+from workflows import EncodingWorkflow, TextToSpeechWorkflow, TranslateWorkflow, CloneVoiceWorkflow, DeleteVoiceWorkflow, StitchAudioWorkflow
 
 load_dotenv()
 
@@ -46,6 +47,12 @@ async def main():
         workflows=[DeleteVoiceWorkflow],
         activities=[delete_voice],
     )
+    stitch_audio_worker = Worker(
+        client,
+        task_queue="stitch-audio-task-queue",
+        workflows=[StitchAudioWorkflow],
+        activities=[stitch_audio],
+    )
 
     futures = [
         worker.run(),
@@ -53,6 +60,7 @@ async def main():
         text_to_speech_worker.run(),
         clone_voice_worker.run(),
         delete_voice_worker.run(),
+        stitch_audio_worker.run(),
     ]
     await asyncio.gather(*futures)
 
