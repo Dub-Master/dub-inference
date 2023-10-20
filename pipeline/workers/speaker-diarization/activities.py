@@ -2,15 +2,18 @@ import os
 
 import boto3
 from botocore.client import ClientError
-from common.secret import HUGGINGFACE_ACCESS_TOKEN as HF_ACCESS_TOKEN
-from common.secret import S3_ACCESS_ID, S3_ACCESS_KEY, S3_BUCKET, S3_ENDPOINT, S3_REGION
 
 # todo: run fully locally w/o HF (https://github.com/pyannote/pyannote-audio/issues/910)
 from pyannote.audio import Pipeline
 from temporalio import activity
 
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
+AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
+
 pipeline = Pipeline.from_pretrained(
-    "pyannote/speaker-diarization", use_auth_token=HF_ACCESS_TOKEN
+    "pyannote/speaker-diarization", use_auth_token=os.getenv("HUGGINGFACE_ACCESS_TOKEN")
 )
 
 
@@ -19,10 +22,9 @@ async def download_audio_from_s3(s3_url: str) -> str:
     # download from s3
     s3_client = boto3.client(
         "s3",
-        endpoint_url=S3_ENDPOINT,
-        aws_access_key_id=S3_ACCESS_ID,
-        aws_secret_access_key=S3_ACCESS_KEY,
-        region_name=S3_REGION,
+        endpoint_url=AWS_S3_ENDPOINT_URL,
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
     )
     # @todo update client initiation to use dot env
 
@@ -30,10 +32,6 @@ async def download_audio_from_s3(s3_url: str) -> str:
     bucket_name = s3_url.split("/")[2]
     object_name = "/".join(s3_url.split("/")[3:])
     local_file_path = object_name.split("/")[-1]
-
-    print(bucket_name)
-    print(object_name)
-    print(local_file_path)
 
     with open(local_file_path, 'wb') as f:
         s3_client.download_fileobj(bucket_name, object_name, f)

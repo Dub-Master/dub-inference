@@ -2,7 +2,6 @@ import asyncio
 import os
 
 from activities import download_video, upload_file_to_s3
-from common.constants import TEMPORAL_URL
 from dotenv import load_dotenv
 from temporalio import activity, workflow
 from temporalio.client import Client

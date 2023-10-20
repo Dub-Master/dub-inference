@@ -3,9 +3,16 @@ from typing import Tuple
 
 import boto3
 from botocore.client import ClientError
-from common.secret import S3_ACCESS_ID, S3_ACCESS_KEY, S3_BUCKET, S3_ENDPOINT, S3_REGION
+from dotenv import load_dotenv
 from temporalio import activity
 from yt_dlp import YoutubeDL
+
+load_dotenv()
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
+AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
 
 ydl_opts = {
     "format": "mp4/bestvideo*+m4a/bestaudio/best",
@@ -48,24 +55,23 @@ async def download_video(url: str) -> Tuple:
 async def upload_file_to_s3(local_file_path: str) -> str:
     s3_client = boto3.client(
         "s3",
-        endpoint_url=S3_ENDPOINT,
-        aws_access_key_id=S3_ACCESS_ID,
-        aws_secret_access_key=S3_ACCESS_KEY,
-        region_name=S3_REGION,
+        endpoint_url=AWS_S3_ENDPOINT_URL,
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
     )
     # @todo update client initiation to use dot env
 
-    bucket_exists = check_bucket_exists(s3_client, S3_BUCKET)
+    bucket_exists = check_bucket_exists(s3_client, AWS_S3_BUCKET)
     print(bucket_exists)
     if not bucket_exists:
         print("creating bucket")
         try:
-            s3_client.create_bucket(Bucket=S3_BUCKET)
+            s3_client.create_bucket(Bucket=AWS_S3_BUCKET)
         except ClientError as e:
             print(e)
             raise e
     with open(local_file_path, "rb") as data:
-        s3_client.upload_fileobj(data, S3_BUCKET, local_file_path)
+        s3_client.upload_fileobj(data, AWS_S3_BUCKET, local_file_path)
 
     os.remove(local_file_path)
-    return "s3://" + S3_BUCKET + "/" + local_file_path
+    return "s3://" + AWS_S3_BUCKET + "/" + local_file_path
