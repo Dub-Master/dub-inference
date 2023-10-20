@@ -2,7 +2,7 @@ import asyncio
 import os
 
 from temporalio.client import Client
-from workers.encoding.params import TranslateParams
+from workers.encoding.params import DeleteVoiceParams
 
 
 async def main():
@@ -11,10 +11,10 @@ async def main():
 
     # Execute a workflow
     result = await client.execute_workflow(
-        "TranslateWorkflow",
-        TranslateParams("Hello World!", "Spanish"),
-        id="translate-workflow",
-        task_queue="translate-task-queue",
+        "DeleteVoiceWorkflow",
+        DeleteVoiceParams("d7wOdbO91b7vBTIlkTP8"),
+        id="delete-voice-workflow",
+        task_queue="delete-voice-task-queue",
     )
 
     print(f"Result: {result}")
