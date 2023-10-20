@@ -43,7 +43,7 @@ async def download_audio_from_s3(s3_url: str) -> str:
 
 @activity.defn
 async def diarize_audio(audio_filepath: str) -> dict:
-    diarization = []
+    diarization_output = []
 
     # apply pretrained pipeline
     diarization = pipeline(audio_filepath)
@@ -51,7 +51,7 @@ async def diarize_audio(audio_filepath: str) -> dict:
     # print the result
     for turn, _, speaker in diarization.itertracks(yield_label=True):
         print(f"start={turn.start:.1f}s stop={turn.end:.1f}s speaker_{speaker}")
-        diarization.append(
+        diarization_output.append(
             {
                 "start": turn.start,
                 "stop": turn.end,
