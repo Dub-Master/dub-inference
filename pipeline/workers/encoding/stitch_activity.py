@@ -30,7 +30,7 @@ def get_audio_file_duration(
 
 @activity.defn
 async def stitch_audio(params: StitchAudioParams) -> str:
-    local_segments = {}
+    local_segments = []
     max_duration = 0
 
     # Download segments, store local file paths and durations
@@ -38,50 +38,95 @@ async def stitch_audio(params: StitchAudioParams) -> str:
         audio_bytes = read_s3_file(segment.s3_track)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as track_file:
             track_file.write(audio_bytes)
-            local_segments[segment.start_time] = track_file.name
+            local_segments.append((segment.start, track_file.name))
             # Get durations to find max_duration
             duration = get_audio_file_duration(track_file.name)
-            if segment.start_time + duration > max_duration:
-                max_duration = segment.start_time + duration
+            if segment.start + duration > max_duration:
+                max_duration = segment.start + duration
 
-    # Generate silent track with max duration
-    silent_track = "silent.mp3"
-    subprocess.run(["ffmpeg", "-f", "lavfi", "-i",
-                   f"anullsrc=r=44100:cl=stereo", "-t", str(max_duration), silent_track])
+    # generate a silent audio with same duration as video
+    subprocess.run([
+        "ffmpeg", "-f", "lavfi", "-y", "-i", "anullsrc=cl=mono:r=44100", "-t",
+        f"{max_duration}", "-q:a", "9", "-acodec", "libmp3lame", "silent.mp3"
+    ])
 
-    input_params = ["-i", silent_track]
-
-    # Add segments to ffmpeg command with offset
-    for start_time, file_path in sorted(local_segments.items()):
-        input_params.extend(["-itsoffset", str(start_time), "-i", file_path])
+    # Create filter_complex to delay segments
+    filter_script = ';'.join([
+        f"[{i}:a]adelay={s}|{s}[aud{i}]" for i, (s, f) in enumerate(local_segments)
+    ])
+    filter_script += ';' + '|'.join([f"[aud{i}]" for i in range(
+        len(local_segments))]) + f'amix=inputs={len(local_segments)}:duration=longest'
 
     workflow_id = activity.info().workflow_run_id
     output_file = f"output-{workflow_id}.mp3"
-    output_dir = 'working_dir'
-    output_path = f"{output_dir}/{output_file}"
+    # run ffmpeg with input files and filter_complex
+    cmd = ["ffmpeg", "-y", "-i", "silent.mp3"] +\
+        [item for sublist in [[f"-i", f] for _, f in local_segments] for item in sublist] +\
+        ["-filter_complex", filter_script, output_file]
 
-    map_params = []
-
-    # Create filters to append each audio track to silent background
-    for i in range(len(local_segments)):
-        map_params.extend(
-            ["-filter_complex", f"[{i+1}:a]apad", "-map", f"[{i+1}]"])
-
-    map_params.append(output_path)
-
-    print(f"Running ffmpeg {' '.join(input_params + map_params)}")
-
-    subprocess.run(["ffmpeg", "-y"] + input_params + map_params)
-
-    with open(output_path, "rb") as f:
-        data = f.read()
-        write_s3_file(output_file, data)
-
-    # Cleanup all the temp files
-    for local_segment in local_segments:
-        os.remove(local_segment)
-    # os.remove(local_video)
-    # os.remove(script_file.name)
-    # os.remove(output_path)
+    print('Running command:', ' '.join(cmd))
+    subprocess.run(cmd)
 
     return output_file
+
+# async def stitch_audio(params: StitchAudioParams) -> str:
+#     local_segments = {}
+#     max_duration = 0
+
+#     # Download segments, store local file paths and durations
+#     for segment in params.segments:
+#         audio_bytes = read_s3_file(segment.s3_track)
+#         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as track_file:
+#             track_file.write(audio_bytes)
+#             local_segments[segment.start] = track_file.name
+#             # Get durations to find max_duration
+#             duration = get_audio_file_duration(track_file.name)
+#             if segment.start + duration > max_duration:
+#                 max_duration = segment.start + duration
+
+#     # Generate silent track with max duration
+#     silent_track = "silent.mp3"
+#     subprocess.run(["ffmpeg", "-f", "lavfi", "-i",
+#                    f"anullsrc=r=44100:cl=stereo", "-t", str(max_duration), '-y', silent_track])
+
+#     input_params = ["-i", silent_track]
+
+#     # Add segments to ffmpeg command with offset
+#     for start, file_path in sorted(local_segments.items()):
+#         input_params.extend(["-itsoffset", str(start), "-i", file_path])
+
+#     workflow_id = activity.info().workflow_run_id
+#     output_file = f"output-{workflow_id}.mp3"
+#     output_dir = 'working_dir/step-stitch-3'
+#     output_path = f"{output_dir}/{output_file}"
+
+#     map_params = []
+
+#     # Create filters to append each audio track to silent background
+#     filter_complex_script = ";".join(
+#         [f"[{i+1}:a]apad[a{i+1}]" for i in range(len(local_segments))])
+#     filter_complex_script += ";" + \
+#         "".join([f"[a{i+1}]" for i, _ in enumerate(params.segments)])
+#     filter_complex_script += f"amix=inputs={len(params.segments)}:duration=longest"
+#     input_params.extend(["-filter_complex", filter_complex_script])
+#     input_params.append(output_path)
+
+#     map_params.append(output_path)
+
+#     print(f"Running ffmpeg {' '.join(input_params + map_params)}")
+
+#     subprocess.run(["ffmpeg", "-y"] + input_params + map_params)
+
+#     print('output_path', output_path)
+#     with open(output_path, "rb") as f:
+#         data = f.read()
+#         write_s3_file(output_file, data)
+
+#     # Cleanup all the temp files
+#     for local_segment in local_segments:
+#         os.remove(local_segment)
+#     # os.remove(local_video)
+#     # os.remove(script_file.name)
+#     # os.remove(output_path)
+
+#     return output_file

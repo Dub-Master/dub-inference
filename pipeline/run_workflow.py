@@ -24,10 +24,10 @@ async def main():
     #     task_queue="encoding-task-queue",
     # )
 
-    # source_data = [
-    #     "s3://dev-input-data-bucket/8ygoE2YiHCs.mp4",
-    #     "s3://dev-input-data-bucket/8ygoE2YiHCs.wav"
-    # ]
+    source_data = [
+        "blah",
+        "blah"
+    ]
 
     s3_url_video_file = source_data[0]
     s3_url_audio_file = source_data[1]
