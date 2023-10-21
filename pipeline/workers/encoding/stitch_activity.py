@@ -52,9 +52,9 @@ async def stitch_audio(params: StitchAudioParams) -> str:
 
     # Create filter_complex to delay segments
     filter_script = ';'.join([
-        f"[{i}:a]adelay={s}|{s}[aud{i}]" for i, (s, f) in enumerate(local_segments)
+        f"[{i+1}:a]adelay={s*1000}|{s*1000}[aud{i+1}]" for i, (s, f) in enumerate(local_segments)
     ])
-    filter_script += ';' + '|'.join([f"[aud{i}]" for i in range(
+    filter_script += ';' + '|'.join([f"[aud{i+1}]" for i in range(
         len(local_segments))]) + f'amix=inputs={len(local_segments)}:duration=longest'
 
     workflow_id = activity.info().workflow_run_id
