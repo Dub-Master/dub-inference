@@ -8,7 +8,7 @@ from media_activity import (
     download_audio_from_s3,
     upload_file_to_s3,
 )
-from stitch_activity import stitch_audio
+from stitch_activity import combine_audio_video, stitch_audio
 
 # from temporalio import activity, workflow
 from temporalio.client import Client
@@ -34,7 +34,7 @@ async def main():
         client,
         task_queue="core-task-queue",
         workflows=[CoreWorkflow],
-        activities=[translate, text_to_speech, delete_voice, stitch_audio,
+        activities=[translate, text_to_speech, delete_voice, stitch_audio, combine_audio_video,
                     transcribe, download_audio_from_s3, create_audio_segments,
                     upload_file_to_s3, clone_voice],
     )

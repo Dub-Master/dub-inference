@@ -7,6 +7,12 @@ class EncodingParams:
 
 
 @dataclass
+class CombineParams:
+    audio_file_path: str
+    video_file_path: str
+
+
+@dataclass
 class CoreParams:
     s3_url_audio_file: str
     s3_url_video_file: str
