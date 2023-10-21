@@ -12,17 +12,17 @@ async def main():
     # Create client connected to server at the given address
     client = await Client.connect(os.getenv("TEMPORAL_URL"))
 
-    input = params.EncodingParams(
-        url="https://www.youtube.com/watch?v=hiSfK5QrlMo")
+    # input = params.EncodingParams(
+    #     url="https://www.youtube.com/watch?v=hiSfK5QrlMo")
     # @todo remove this hardcoding
 
     # Execute a workflow
-    source_data = await client.execute_workflow(
-        "EncodingWorkflow",
-        input,
-        id="encoding-workflow",
-        task_queue="encoding-task-queue",
-    )
+    # source_data = await client.execute_workflow(
+    #     "EncodingWorkflow",
+    #     input,
+    #     id="encoding-workflow",
+    #     task_queue="encoding-task-queue",
+    # )
 
     # source_data = [
     #     "s3://dev-input-data-bucket/8ygoE2YiHCs.mp4",
