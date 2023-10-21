@@ -2,7 +2,7 @@ import asyncio
 import os
 
 from temporalio.client import Client
-from workers.encoding.params import TranslateParams
+from workers.common.params import TranslateParams
 
 
 async def main():
