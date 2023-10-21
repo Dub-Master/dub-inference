@@ -17,15 +17,15 @@ set_api_key(ELEVEN_LABS_API_KEY)
 @activity.defn
 async def text_to_speech(params: TextToSpeechParams) -> str:
     audio_data = generate(params.text, voice=params.voice)
-    wokflow_id = activity.info().workflow_run_id
-    s3_key = f"output-voice-{wokflow_id}.mp3"
+    # wokflow_id = activity.info().workflow_run_id
+    s3_key = f"output-voice-{params.unique_id}.mp3"
     write_s3_file(s3_key, audio_data)
     return s3_key
 
 
 @activity.defn
 async def clone_voice(params: CloneVoiceParams) -> str:
-    wokflow_id = activity.info().workflow_run_id
+    workflow_id = activity.info().workflow_run_id
     audio_file_paths = []
 
     for s3_audio_file in params.s3_audio_files:
@@ -34,7 +34,7 @@ async def clone_voice(params: CloneVoiceParams) -> str:
             temp_file.write(audio_data)
             audio_file_paths.append(temp_file.name)
 
-    voice_description = f"Voice for run id {wokflow_id}"
+    voice_description = f"Voice for run id {workflow_id}"
     voice_id = eleven_labs_add_voice(
         params.voice_name, voice_description, audio_file_paths)
 

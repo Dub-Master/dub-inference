@@ -4,5 +4,5 @@
 *.mp4
 *.wav
 *.part
-
+*.mp3
 venv/

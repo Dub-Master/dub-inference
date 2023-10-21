@@ -27,6 +27,7 @@ async def stitch_audio(params: StitchAudioParams) -> str:
     for segment in params.segments:
         audio_bytes = read_s3_file(segment.s3_track)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as track_file:
+            # TODO ffmpeg says Estimating duration from bitrate, this may be inaccurate.
             track_file.write(audio_bytes)
             local_segments.append(track_file.name)
 
@@ -35,9 +36,9 @@ async def stitch_audio(params: StitchAudioParams) -> str:
     for local_segment in local_segments:
         input_params.extend(["-i", local_segment])
 
-    wokflow_id = activity.info().workflow_run_id
-    output_file = f"output-{wokflow_id}.mp4"
-    output_dir = tempfile.mkdtemp()
+    workflow_id = activity.info().workflow_run_id
+    output_file = f"output-{workflow_id}.mp4"
+    output_dir = 'working_dir'
     output_path = f"{output_dir}/{output_file}"
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w") as script_file:
@@ -51,7 +52,7 @@ async def stitch_audio(params: StitchAudioParams) -> str:
 
     input_params.extend(["-filter_complex_script", script_file.name])
     input_params.extend(["-map", "0:v", "-map", "[a]", "-c:v",
-                        "copy", "-c:a", "aac", "-shortest", output_path])
+                        "copy", "-c:a", "pcm_s16le", "-shortest", output_path])
 
     print(f"Running ffmpeg {' '.join(input_params)}")
 
@@ -64,8 +65,8 @@ async def stitch_audio(params: StitchAudioParams) -> str:
     # Cleanup all the temp files
     for local_segment in local_segments:
         os.remove(local_segment)
-    os.remove(local_video)
-    os.remove(script_file.name)
-    os.remove(output_path)
+    # os.remove(local_video)
+    # os.remove(script_file.name)
+    # os.remove(output_path)
 
     return output_file

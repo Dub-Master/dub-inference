@@ -16,14 +16,19 @@ AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
 
 @activity.defn
 async def download_audio_from_s3(s3_path: str) -> str:
+    print('s3_path', s3_path)
 
     local_full_path = os.path.join("working_dir", s3_path)
+    print('local_full_path', local_full_path)
     local_dir = os.path.dirname(local_full_path)
+    print('local_dir', local_dir)
     if not os.path.exists(local_dir):
         os.makedirs(local_dir)
+        print('created local_dir', local_dir)
     with open(local_full_path, "wb") as f:
         f.write(read_s3_file(s3_path))
 
+    print('saved to local_full_path: ', local_full_path)
     return local_full_path
 
 data_dir = 'working_dir'

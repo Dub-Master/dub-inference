@@ -13,7 +13,7 @@ async def main():
     client = await Client.connect(os.getenv("TEMPORAL_URL"))
 
     input = params.EncodingParams(
-        url="https://www.youtube.com/watch?v=8ygoE2YiHCs")
+        url="https://www.youtube.com/watch?v=hiSfK5QrlMo")
     # @todo remove this hardcoding
 
     # Execute a workflow
@@ -29,6 +29,7 @@ async def main():
     #     "s3://dev-input-data-bucket/8ygoE2YiHCs.wav"
     # ]
 
+    s3_url_video_file = source_data[0]
     s3_url_audio_file = source_data[1]
 
     # diarization = await client.execute_workflow(
@@ -72,6 +73,7 @@ async def main():
 
     core_inputs = params.CoreParams(
         s3_url_audio_file=s3_url_audio_file,
+        s3_url_video_file=s3_url_video_file,
         diarization=diarization)
 
     output = await client.execute_workflow(

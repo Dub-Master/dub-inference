@@ -9,6 +9,7 @@ with workflow.unsafe.imports_passed_through():
     # from activities import download_video, upload_file_to_s3
     from activities import download_video
     from common.params import (
+        AudioSegment,
         CloneVoiceParams,
         CoreParams,
         CreateSegmentParams,
@@ -16,6 +17,7 @@ with workflow.unsafe.imports_passed_through():
         EncodingParams,
         StitchAudioParams,
         TextToSpeechParams,
+        TranscribeParams,
         TranslateParams,
     )
     from media_activity import (
@@ -118,10 +120,12 @@ class CoreWorkflow:
 
         voice_id_dict = {}
 
+        print('workflow.info()', workflow.info())
+        workflow_run_id = workflow.info().run_id
         for speaker in segments_per_speaker.keys():
             print(f'Speaker: {speaker}')
 
-            run_id = '123'  # TODO remove
+            run_id = '123'  # @TODO remove and get unique id from workflow
             speaker_id = speaker
 
             voice_name = f"{run_id}-{speaker_id}"
@@ -140,32 +144,53 @@ class CoreWorkflow:
 
             voice_id_dict[speaker] = voice_id
 
+        print(voice_id_dict)
+
+        output_segments = []
+
         for i, s3_url in enumerate(list_of_s3_urls):
-            localfilepath = await workflow.execute_activity(
+            print('enumerate(list_of_s3_urls): ', i)
+            print('s3_url', s3_url)
+            audio_file_url = await workflow.execute_activity(
                 download_audio_from_s3, s3_url['s3_url'],
                 start_to_close_timeout=timedelta(
                     minutes=2)
             )
+            print('localfilepath', audio_file_url)
             transcript = await workflow.execute_activity(
-                transcribe, localfilepath, start_to_close_timeout=timedelta(
-                    minutes=2)
+                transcribe, TranscribeParams(audio_file_url=audio_file_url),
+                start_to_close_timeout=timedelta(
+                    minutes=5)
             )
+
+            target_language = "English"
+            print('transcript', transcript)
             translation = await workflow.execute_activity(
-                translate, TranslateParams(transcript, "Spanish"),
+                translate, TranslateParams(
+                    text=transcript, target_language=target_language),
                 start_to_close_timeout=timedelta(
                     minutes=1)
             )
 
+            print('voice_id_dict: ', voice_id_dict)
+            print("s3_url['speaker']: ", s3_url['speaker'])
             voice_id = voice_id_dict[s3_url['speaker']]
 
             audio_url = await workflow.execute_activity(
-                text_to_speech, TextToSpeechParams(translation, voice_id),
+                text_to_speech, TextToSpeechParams(
+                    text=translation, voice=voice_id, unique_id=i),
                 start_to_close_timeout=timedelta(
                     minutes=5)
             )
             print(audio_url)
+            output_segments.append(AudioSegment(
 
-        unique_voice_ids = []
+                start=params.diarization[i]["start"],
+                stop=params.diarization[i]["stop"],
+                s3_track=audio_url
+
+            ))
+        unique_voice_ids = voice_id_dict.values()
         for unique_voice_id in unique_voice_ids:
             await workflow.execute_activity(
                 delete_voice, DeleteVoiceParams(unique_voice_id),
@@ -173,9 +198,25 @@ class CoreWorkflow:
                     minutes=5)
             )
 
-        StitchAudioParams(list_of_s3_urls, params.s3_url_video_file)
+        print(output_segments)
+        stitch_params = StitchAudioParams(
+            output_segments,
+            params.s3_url_video_file,
+            workflow_id=workflow_run_id)
+
+        # class AudioSegment:
+        #     start: float
+        #     stop: float
+        #     s3_track: str
+
+        # class StitchAudioParams:
+        #     segments: list[AudioSegment]
+        #     s3_video_track: str
+
         output_file = await workflow.execute_activity(
-            stitch_audio, params, start_to_close_timeout=timedelta(minutes=10)
+            stitch_audio,
+            stitch_params,
+            start_to_close_timeout=timedelta(minutes=10)
         )
 
         print(output_file)

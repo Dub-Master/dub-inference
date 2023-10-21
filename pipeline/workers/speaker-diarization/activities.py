@@ -1,7 +1,5 @@
 import os
 
-import boto3
-from botocore.client import ClientError
 from dotenv import load_dotenv
 from pyannote.audio import Pipeline
 from temporalio import activity

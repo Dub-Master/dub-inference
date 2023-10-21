@@ -9,6 +9,7 @@ class EncodingParams:
 @dataclass
 class CoreParams:
     s3_url_audio_file: str
+    s3_url_video_file: str
     diarization: list
 
 
@@ -38,6 +39,7 @@ class TranslateParams:
 class TextToSpeechParams:
     text: str
     voice: str
+    unique_id: int
 
 
 @dataclass
@@ -62,3 +64,4 @@ class AudioSegment:
 class StitchAudioParams:
     segments: list[AudioSegment]
     s3_video_track: str
+    workflow_id: str
