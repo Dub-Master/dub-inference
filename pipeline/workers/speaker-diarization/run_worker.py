@@ -3,16 +3,18 @@ import os
 
 from activities import diarize_audio, download_audio_from_s3
 from dotenv import load_dotenv
-from temporalio import activity, workflow
 from temporalio.client import Client
 from temporalio.worker import Worker
 from workflows import DiarizationWorkflow
 
 load_dotenv()
 
+TEMPORAL_URL = os.getenv("TEMPORAL_URL")
+TEMPORAL_NAMESPACE = os.getenv("TEMPORAL_NAMESPACE") or "default"
+
 
 async def main():
-    client = await Client.connect(os.getenv("TEMPORAL_URL"), namespace="default")
+    client = await Client.connect(TEMPORAL_URL, namespace=TEMPORAL_NAMESPACE)
     # Run the worker
     worker = Worker(
         client,

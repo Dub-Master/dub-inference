@@ -20,9 +20,12 @@ from workflows import CoreWorkflow, EncodingWorkflow
 
 load_dotenv()
 
+TEMPORAL_URL = os.getenv("TEMPORAL_URL")
+TEMPORAL_NAMESPACE = os.getenv("TEMPORAL_NAMESPACE") or "default"
+
 
 async def main():
-    client = await Client.connect(os.getenv("TEMPORAL_URL"), namespace="default")
+    client = await Client.connect(TEMPORAL_URL, namespace=TEMPORAL_NAMESPACE)
     # Run the worker
     worker = Worker(
         client,
@@ -34,7 +37,8 @@ async def main():
         client,
         task_queue="core-task-queue",
         workflows=[CoreWorkflow],
-        activities=[translate, text_to_speech, delete_voice, stitch_audio, combine_audio_video,
+        activities=[translate, text_to_speech,
+                    delete_voice, stitch_audio, combine_audio_video,
                     transcribe, download_audio_from_s3, create_audio_segments,
                     upload_file_to_s3, clone_voice],
     )
