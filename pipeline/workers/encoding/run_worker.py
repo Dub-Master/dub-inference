@@ -20,9 +20,12 @@ from workflows import CoreWorkflow, EncodingWorkflow
 
 load_dotenv()
 
+TEMPORAL_URL = os.getenv("TEMPORAL_URL")
+TEMPORAL_NAMESPACE = os.getenv("TEMPORAL_NAMESPACE") or "default"
+
 
 async def main():
-    client = await Client.connect(os.getenv("TEMPORAL_URL"), namespace="default")
+    client = await Client.connect(TEMPORAL_URL, namespace=TEMPORAL_NAMESPACE)
     # Run the worker
     worker = Worker(
         client,

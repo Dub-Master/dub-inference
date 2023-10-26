@@ -8,10 +8,13 @@ from workers.common import params
 
 load_dotenv()
 
+TEMPORAL_URL = os.getenv("TEMPORAL_URL")
+TEMPORAL_NAMESPACE = os.getenv("TEMPORAL_NAMESPACE") or "default"
+
 
 async def main():
     # Create client connected to server at the given address
-    client = await Client.connect(os.getenv("TEMPORAL_URL"))
+    client = await Client.connect(TEMPORAL_URL, namespace=TEMPORAL_NAMESPACE)
 
     input = params.EncodingParams(
         url="https://www.youtube.com/watch?v=8ygoE2YiHCs")
