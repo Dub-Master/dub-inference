@@ -37,7 +37,8 @@ async def main():
         client,
         task_queue="core-task-queue",
         workflows=[CoreWorkflow],
-        activities=[translate, text_to_speech, delete_voice, stitch_audio, combine_audio_video,
+        activities=[translate, text_to_speech,
+                    delete_voice, stitch_audio, combine_audio_video,
                     transcribe, download_audio_from_s3, create_audio_segments,
                     upload_file_to_s3, clone_voice],
     )
