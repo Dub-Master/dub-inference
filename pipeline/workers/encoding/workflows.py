@@ -15,6 +15,7 @@ with workflow.unsafe.imports_passed_through():
         CoreParams,
         CreateSegmentParams,
         DeleteVoiceParams,
+        E2EParams,
         EncodingParams,
         StitchAudioParams,
         TextToSpeechParams,
@@ -223,3 +224,40 @@ class CoreWorkflow:
 
         print(output_file)
         return output_file
+
+
+@workflow.defn
+class E2EWorkflow:
+    @workflow.run
+    async def handle(self, params: E2EParams) -> str:
+        input = EncodingParams(url=params.url)
+        source_data = await workflow.execute_child_workflow(
+            "EncodingWorkflow",
+            input,
+            id="encoding-workflow",
+            task_queue="encoding-task-queue",
+        )
+        s3_url_video_file = source_data[0]
+        s3_url_audio_file = source_data[1]
+
+        diarization = await workflow.execute_child_workflow(
+            "DiarizationWorkflow",
+            s3_url_audio_file,
+            id="diarization-workflow",
+            task_queue="diarization-task-queue",
+        )
+
+        print(f"Result: {diarization}")
+
+        core_inputs = params.CoreParams(
+            s3_url_audio_file=s3_url_audio_file,
+            s3_url_video_file=s3_url_video_file,
+            diarization=diarization)
+
+        output = await workflow.execute_child_workflow(
+            "CoreWorkflow",
+            core_inputs,
+            id="core-workflow",
+            task_queue="core-task-queue",
+        )
+        return output
