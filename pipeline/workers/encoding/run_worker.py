@@ -16,7 +16,7 @@ from temporalio.worker import Worker
 from transcribe_activity import transcribe
 from translate_activity import translate
 from voice_clone_activity import clone_voice, delete_voice, text_to_speech
-from workflows import CoreWorkflow, EncodingWorkflow
+from workflows import CoreWorkflow, EncodingWorkflow, E2EWorkflow
 
 load_dotenv()
 
@@ -42,6 +42,12 @@ async def main():
                     transcribe, download_audio_from_s3, create_audio_segments,
                     upload_file_to_s3, clone_voice],
     )
+    e2e_worker = Worker(
+        client,
+        task_queue="e2e-task-queue",
+        workflows=[E2EWorkflow],
+        activities=[],
+    )
     # stitch_audio_worker = Worker(
     #     client,
     #     task_queue="stitch-audio-task-queue",
@@ -65,8 +71,7 @@ async def main():
     futures = [
         worker.run(),
         core_worker.run(),
-        # stitch_audio_worker.run(),
-
+        e2e_worker.run(),
     ]
     await asyncio.gather(*futures)
 
