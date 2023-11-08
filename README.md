@@ -2,7 +2,7 @@
 
 ![Logo](logo.png)
 
-Dubmaster is on a mission to allow content creators to broadcast to a wider audience. We identified a problem where current generation’s automatic dubbing services are relatively expensive. Our solution is to leverage open source models to democratize the dubbing of content.
+DubMaster is on a mission to allow content creators to broadcast to a wider audience. We identified a problem where current generation’s automatic dubbing services are relatively expensive. Our solution is to leverage open source models to democratize the dubbing of content.
 
 ## Prerequisites
 
