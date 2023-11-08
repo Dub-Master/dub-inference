@@ -72,3 +72,17 @@ Dub-Web is a React frontend. You can find the repository [here](https://github.c
    npm start
    ```
    The frontend will start running on `http://localhost:3000`.
+
+## Backlog
+
+- [x] Downloading YouTube video
+- [x] Speaker diarization
+- [x] Transcription
+- [x] Translation
+- [x] Voice cloning
+- [x] Video/audio mixing
+- [ ] Add back any background audio
+- [ ] Move transcription to a GPU worker
+- [ ] Move translation to an open source model
+- [ ] Move voice cloning to open source
+- [ ] Modify speaker's lips in the video to match the translated audio
