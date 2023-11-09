@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from activities import download_video
+from activities import download_video, shrink_inputs
 from dotenv import load_dotenv
 from media_activity import (
     create_audio_segments,
@@ -16,7 +16,7 @@ from temporalio.worker import Worker
 from transcribe_activity import transcribe
 from translate_activity import translate
 from voice_clone_activity import clone_voice, delete_voice, text_to_speech
-from workflows import CoreWorkflow, EncodingWorkflow, E2EWorkflow
+from workflows import CoreWorkflow, E2EWorkflow, EncodingWorkflow
 
 load_dotenv()
 
@@ -31,7 +31,7 @@ async def main():
         client,
         task_queue="encoding-task-queue",
         workflows=[EncodingWorkflow],
-        activities=[download_video, upload_file_to_s3],
+        activities=[download_video, shrink_inputs, upload_file_to_s3],
     )
     core_worker = Worker(
         client,

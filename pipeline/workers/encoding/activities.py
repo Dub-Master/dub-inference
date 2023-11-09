@@ -1,7 +1,8 @@
 import os
 from typing import Tuple
 
-from common.params import EncodingParams
+import ffmpeg
+from common.params import EncodingParams, RawInputParams
 from dotenv import load_dotenv
 from temporalio import activity
 from yt_dlp import YoutubeDL
@@ -12,6 +13,8 @@ AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
 AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
+
+SHORTEN_VIDEO_MINUTES = os.getenv("SHORTEN_VIDEO_MINUTES", '')
 
 ydl_opts = {
     "format": "mp4/bestvideo*+m4a/bestaudio/best",
@@ -30,11 +33,49 @@ ydl_opts = {
 
 
 @activity.defn
-async def download_video(params: EncodingParams) -> Tuple:
+async def download_video(params: EncodingParams) -> str:
     urls = [params.url]
     with YoutubeDL(ydl_opts) as ydl:
         ydl.download(urls)
     info = ydl.extract_info(params.url, download=False)
     info_json = ydl.sanitize_info(info)
     video_id = info_json["id"]
-    return (f"{video_id}.mp4", f"{video_id}.wav")
+
+    return video_id
+
+
+@activity.defn
+async def shrink_inputs(params: RawInputParams) -> Tuple:
+    if SHORTEN_VIDEO_MINUTES != '':
+        try:
+            int_check = int(SHORTEN_VIDEO_MINUTES)
+        except ValueError:
+            raise ValueError(
+                "env var 'SHORTEN_VIDEO_MINUTES' must be an integer." +
+                f"It is currently set to {int_check}")
+
+        if int(SHORTEN_VIDEO_MINUTES) <= 0:
+            raise ValueError(
+                "env var 'SHORTEN_VIDEO_MINUTES' must be above 0.")
+
+        input_file = f"{params.video_id}.mp4"
+        output_file = f"{params.video_id}_short.mp4"
+
+        stream = ffmpeg.input(input_file)
+        stream = ffmpeg.output(stream, output_file,
+                               t=int(SHORTEN_VIDEO_MINUTES)*60)
+        ffmpeg.run(stream)
+
+        input_file = f"{params.video_id}.wav"
+        output_file = f"{params.video_id}_short.wav"
+
+        stream = ffmpeg.input(input_file)
+        stream = ffmpeg.output(stream, output_file,
+                               t=int(SHORTEN_VIDEO_MINUTES)*60)
+        ffmpeg.run(stream)
+
+        return (f"{params.video_id}_short.mp4",
+                f"{params.video_id}_short.wav")
+    else:
+        return (f"{params.video_id}.mp4",
+                f"{params.video_id}.wav")
