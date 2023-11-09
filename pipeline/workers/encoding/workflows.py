@@ -92,7 +92,8 @@ class CoreWorkflow:
         )
 
         create_segment_inputs = CreateSegmentParams(
-            audio_local_filepath=audio_local_filepath, diarization=params.diarization)
+            audio_local_filepath=audio_local_filepath,
+            diarization=params.diarization)
 
         list_of_local_file_urls = await workflow.execute_activity(
             create_audio_segments, create_segment_inputs,
@@ -109,12 +110,14 @@ class CoreWorkflow:
             }
 
             s3_url = await workflow.execute_activity(
-                upload_file_to_s3, segment_to_upload, start_to_close_timeout=timedelta(
+                upload_file_to_s3, segment_to_upload,
+                start_to_close_timeout=timedelta(
                     minutes=3)
             )
 
             list_of_s3_urls.append(
-                {'s3_url': s3_url, 'speaker': params.diarization[i]['speaker']})
+                {'s3_url': s3_url,
+                 'speaker': params.diarization[i]['speaker']})
 
         segments_per_speaker = defaultdict(list)
 
@@ -134,7 +137,8 @@ class CoreWorkflow:
         for speaker in segments_per_speaker.keys():
             print(f'Speaker: {speaker}')
 
-            run_id = workflow.info().run_id  # @TODO remove and get unique id from workflow
+            # @TODO remove and get unique id from workflow
+            run_id = workflow.info().run_id
             speaker_id = speaker
 
             voice_name = f"{run_id}-{speaker_id}"
@@ -172,11 +176,11 @@ class CoreWorkflow:
                     minutes=5)
             )
 
-            target_language = "English"
             print('transcript', transcript)
             translation = await workflow.execute_activity(
                 translate, TranslateParams(
-                    text=transcript, target_language=target_language),
+                    text=transcript,
+                    target_language=params.target_language),
                 start_to_close_timeout=timedelta(
                     minutes=1)
             )
@@ -221,7 +225,8 @@ class CoreWorkflow:
         print(audio_file)
 
         combine_params = CombineParams(
-            audio_file_path=audio_file, video_file_path=params.s3_url_video_file)
+            audio_file_path=audio_file,
+            video_file_path=params.s3_url_video_file)
 
         output_file = await workflow.execute_activity(
             combine_audio_video,
@@ -257,6 +262,7 @@ class E2EWorkflow:
         print(f"Result: {diarization}")
 
         core_inputs = CoreParams(
+            target_language=params.target_language,
             s3_url_audio_file=s3_url_audio_file,
             s3_url_video_file=s3_url_video_file,
             diarization=diarization)

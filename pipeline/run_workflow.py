@@ -39,7 +39,9 @@ async def main():
     )
     print(f"Result: {diarization}")
 
+    target_language = "Spanish"
     core_inputs = params.CoreParams(
+        target_language=target_language,
         s3_url_audio_file=s3_url_audio_file,
         s3_url_video_file=s3_url_video_file,
         diarization=diarization)

@@ -69,9 +69,8 @@ async def shrink_inputs(params: RawInputParams) -> Tuple:
         stream = ffmpeg.output(
             stream,
             output_file,
-            t=int(SHORTEN_VIDEO_MINUTES)*60,
-            overwrite_output=True)
-        ffmpeg.run(stream)
+            t=int(SHORTEN_VIDEO_MINUTES)*60)
+        ffmpeg.run(stream, overwrite_output=True)
 
         input_file = f"{params.video_id}.wav"
         output_file = f"{params.video_id}_short.wav"
@@ -80,9 +79,8 @@ async def shrink_inputs(params: RawInputParams) -> Tuple:
         stream = ffmpeg.output(
             stream,
             output_file,
-            t=int(SHORTEN_VIDEO_MINUTES)*60,
-            overwrite_output=True)
-        ffmpeg.run(stream)
+            t=int(SHORTEN_VIDEO_MINUTES)*60)
+        ffmpeg.run(stream, overwrite_output=True)
 
         return (f"{params.video_id}_short.mp4",
                 f"{params.video_id}_short.wav")
