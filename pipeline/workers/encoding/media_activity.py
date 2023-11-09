@@ -47,10 +47,10 @@ async def create_audio_segments(input: CreateSegmentParams) -> list:
         audio_input = ffmpeg.input(input.audio_local_filepath)
         audio_cut = audio_input.audio.filter(
             'atrim', start=start, duration=stop - start)
-        filename = f"{i}.wav"
+        filename = f"{i}.mp3"
         local_path = os.path.join(data_dir, filename)
         audio_output = ffmpeg.output(
-            audio_cut, local_path)
+            audio_cut, local_path, format='mp3')
         ffmpeg.run(audio_output, overwrite_output=True)
         local_file_paths.append(local_path)
     return local_file_paths
