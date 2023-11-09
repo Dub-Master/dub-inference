@@ -12,6 +12,11 @@ class EncodingParams:
 
 
 @dataclass
+class RawInputParams:
+    video_id: str
+
+
+@dataclass
 class CombineParams:
     audio_file_path: str
     video_file_path: str

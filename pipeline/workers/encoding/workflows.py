@@ -6,8 +6,7 @@ from temporalio import workflow
 
 # Import activity, passing it through the sandbox without reloading the module
 with workflow.unsafe.imports_passed_through():
-    # from activities import download_video, upload_file_to_s3
-    from activities import download_video
+    from activities import download_video, shrink_inputs
     from common.params import (
         AudioSegment,
         CloneVoiceParams,
@@ -17,6 +16,7 @@ with workflow.unsafe.imports_passed_through():
         DeleteVoiceParams,
         E2EParams,
         EncodingParams,
+        RawInputParams,
         StitchAudioParams,
         TextToSpeechParams,
         TranscribeParams,
@@ -37,12 +37,19 @@ with workflow.unsafe.imports_passed_through():
 class EncodingWorkflow:
     @workflow.run
     async def handle_media(self, params: EncodingParams) -> Tuple:
+        video_id = await workflow.execute_activity(
+            download_video, params, start_to_close_timeout=timedelta(
+                minutes=15)
+        )
+
+        shrinkParams = RawInputParams(video_id=video_id)
+
         (
             local_video_file_path,
             local_audio_file_path,
         ) = await workflow.execute_activity(
-            download_video, params, start_to_close_timeout=timedelta(
-                minutes=15)
+            shrink_inputs, shrinkParams, start_to_close_timeout=timedelta(
+                minutes=10)
         )
 
         print(local_audio_file_path)
