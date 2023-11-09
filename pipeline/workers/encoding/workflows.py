@@ -249,7 +249,7 @@ class E2EWorkflow:
 
         print(f"Result: {diarization}")
 
-        core_inputs = params.CoreParams(
+        core_inputs = CoreParams(
             s3_url_audio_file=s3_url_audio_file,
             s3_url_video_file=s3_url_video_file,
             diarization=diarization)
