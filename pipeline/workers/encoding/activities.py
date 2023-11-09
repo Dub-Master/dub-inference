@@ -46,7 +46,12 @@ async def download_video(params: EncodingParams) -> str:
 
 @activity.defn
 async def shrink_inputs(params: RawInputParams) -> Tuple:
-    if SHORTEN_VIDEO_MINUTES != '':
+    input_file = f"{params.video_id}.mp4"
+    probe = ffmpeg.probe(input_file)
+    video_duration = float(probe['format']['duration'])
+
+    if (SHORTEN_VIDEO_MINUTES != '' and
+            video_duration > int(SHORTEN_VIDEO_MINUTES)*60):
         try:
             int_check = int(SHORTEN_VIDEO_MINUTES)
         except ValueError:
@@ -58,7 +63,6 @@ async def shrink_inputs(params: RawInputParams) -> Tuple:
             raise ValueError(
                 "env var 'SHORTEN_VIDEO_MINUTES' must be above 0.")
 
-        input_file = f"{params.video_id}.mp4"
         output_file = f"{params.video_id}_short.mp4"
 
         stream = ffmpeg.input(input_file)
