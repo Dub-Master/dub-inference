@@ -10,6 +10,7 @@ from util import read_s3_file, write_s3_file
 
 load_dotenv()
 ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY")
+MAX_AUDIO_SAMPLES = 25
 
 set_api_key(ELEVEN_LABS_API_KEY)
 
@@ -28,7 +29,7 @@ async def clone_voice(params: CloneVoiceParams) -> str:
     workflow_id = activity.info().workflow_run_id
     audio_file_paths = []
 
-    for s3_audio_file in params.s3_audio_files:
+    for s3_audio_file in params.s3_audio_files[:MAX_AUDIO_SAMPLES]:
         audio_data = read_s3_file(s3_audio_file)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_file:
             temp_file.write(audio_data)
