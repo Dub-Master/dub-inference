@@ -4,6 +4,20 @@
 
 DubMaster is on a mission to allow content creators to broadcast to a wider audience. We identified a problem where current generation’s automatic dubbing services are relatively expensive. Our solution is to leverage open source models to democratize the dubbing of content.
 
+## Technical Overview
+
+DubMaster works in several steps to provide automatic dubbing services:
+
+1. **Encoding**: The encoding worker is responsible for processing the input video and audio files. It uses ffmpeg to shorten the video and extract the audio. The shortened video and audio are then uploaded to S3 for storage.
+
+2. **Speaker Diarization**: The speaker-diarization worker identifies different speakers in the audio file. This information is used later in the voice cloning process.
+
+3. **Transcription and Translation**: The audio file is transcribed using OpenAI's API. The transcribed text is then translated into the target language.
+
+4. **Voice Cloning**: The voice cloning process uses Eleven Labs' API to clone the voices of the identified speakers. The cloned voices are used to dub the translated text.
+
+5. **Stitching and Combining**: The final step is to stitch the dubbed audio segments together and combine them with the video file. The result is a video file with dubbed audio in the target language.
+
 ## Prerequisites
 
 Please ensure you have these prerequisites before running DubMaster.
