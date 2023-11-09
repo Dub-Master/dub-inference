@@ -56,6 +56,7 @@ def eleven_labs_add_voice(
         voice_description: str,
         audio_file_paths: list[str]
 ) -> str:
+    print(audio_file_paths)
     url = "https://api.elevenlabs.io/v1/voices/add"
     headers = {
         "Accept": "application/json",
@@ -71,6 +72,7 @@ def eleven_labs_add_voice(
         for id, audio_file_path in enumerate(audio_file_paths)
     ]
     resp = requests.post(url, headers=headers, data=data, files=files)
+    print(resp.json())
     if resp.status_code != 200:
         raise Exception(f"Failed to add voice: {resp.status_code}")
     return resp.json()['voice_id']
