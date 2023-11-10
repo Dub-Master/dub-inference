@@ -14,13 +14,16 @@ TEMPORAL_NAMESPACE = os.getenv("TEMPORAL_NAMESPACE") or "default"
 
 
 async def main():
-    client = await Client.connect(TEMPORAL_URL, namespace=TEMPORAL_NAMESPACE)
-    # Run the worker
+    client = await Client.connect(
+        TEMPORAL_URL, 
+        namespace=TEMPORAL_NAMESPACE
+    )
     worker = Worker(
         client,
         task_queue="diarization-task-queue",
         workflows=[DiarizationWorkflow],
         activities=[diarize_audio, download_audio_from_s3],
+        max_concurrent_activities=1
     )
     await worker.run()
 

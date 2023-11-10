@@ -21,6 +21,7 @@ class RawInputParams:
 class CombineParams:
     audio_file_path: str
     video_file_path: str
+    output_path: str
 
 
 @dataclass
