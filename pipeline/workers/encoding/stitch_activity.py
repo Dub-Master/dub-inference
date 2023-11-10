@@ -78,8 +78,7 @@ async def combine_audio_video(params: CombineParams) -> str:
         video_file.write(read_s3_file(params.video_file_path))
         local_video = video_file.name
 
-    workflow_id = activity.info().workflow_run_id
-    output_file = f"output-{workflow_id}.mp4"
+    output_file = params.output_path
 
     cmd = f"ffmpeg -i {local_video} -y -i {params.audio_file_path} -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 {output_file}"
     os.system(cmd)

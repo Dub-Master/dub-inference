@@ -3,6 +3,7 @@ from datetime import timedelta
 from typing import Tuple
 
 from temporalio import workflow
+from workflow_util import get_workflow_job_id
 
 # Import activity, passing it through the sandbox without reloading the module
 with workflow.unsafe.imports_passed_through():
@@ -86,6 +87,8 @@ class EncodingWorkflow:
 class CoreWorkflow:
     @workflow.run
     async def handle(self, params: CoreParams) -> str:
+        job_id = get_workflow_job_id()
+
         audio_local_filepath = await workflow.execute_activity(
             download_audio_from_s3, params.s3_url_audio_file,
             start_to_close_timeout=timedelta(minutes=5)
@@ -224,9 +227,12 @@ class CoreWorkflow:
 
         print(audio_file)
 
+        output_path = f"output-{job_id}.mp4"
         combine_params = CombineParams(
             audio_file_path=audio_file,
-            video_file_path=params.s3_url_video_file)
+            video_file_path=params.s3_url_video_file,
+            output_path=output_path
+        )
 
         output_file = await workflow.execute_activity(
             combine_audio_video,
@@ -234,19 +240,27 @@ class CoreWorkflow:
             start_to_close_timeout=timedelta(minutes=10)
         )
 
-        print(output_file)
-        return output_file
+        print("output file:", output_file)
+
+        s3_url = await workflow.execute_activity(
+            upload_file_to_s3, 
+            output_file,
+            start_to_close_timeout=timedelta(minutes=10)
+        )
+        print("output s3_url:", s3_url)
+        return s3_url
 
 
 @workflow.defn
 class E2EWorkflow:
     @workflow.run
     async def handle(self, params: E2EParams) -> str:
+        job_id = get_workflow_job_id()
         input = EncodingParams(url=params.url)
         source_data = await workflow.execute_child_workflow(
             "EncodingWorkflow",
             input,
-            id="encoding-workflow",
+            id=f"encoding-{job_id}",
             task_queue="encoding-task-queue",
         )
         s3_url_video_file = source_data[0]
@@ -255,11 +269,11 @@ class E2EWorkflow:
         diarization = await workflow.execute_child_workflow(
             "DiarizationWorkflow",
             s3_url_audio_file,
-            id="diarization-workflow",
+            id=f"diarization-{job_id}",
             task_queue="diarization-task-queue",
         )
 
-        print(f"Result: {diarization}")
+        print(f"diarization: {diarization}")
 
         core_inputs = CoreParams(
             target_language=params.target_language,
@@ -267,10 +281,10 @@ class E2EWorkflow:
             s3_url_video_file=s3_url_video_file,
             diarization=diarization)
 
-        output = await workflow.execute_child_workflow(
+        output_s3_url = await workflow.execute_child_workflow(
             "CoreWorkflow",
             core_inputs,
-            id="core-workflow",
+            id=f"core-{job_id}",
             task_queue="core-task-queue",
         )
-        return output
+        return output_s3_url

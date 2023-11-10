@@ -10,7 +10,6 @@ from media_activity import (
 )
 from stitch_activity import combine_audio_video, stitch_audio
 
-# from temporalio import activity, workflow
 from temporalio.client import Client
 from temporalio.worker import Worker
 from transcribe_activity import transcribe
@@ -25,8 +24,10 @@ TEMPORAL_NAMESPACE = os.getenv("TEMPORAL_NAMESPACE") or "default"
 
 
 async def main():
-    client = await Client.connect(TEMPORAL_URL, namespace=TEMPORAL_NAMESPACE)
-    # Run the worker
+    client = await Client.connect(
+        TEMPORAL_URL, 
+        namespace=TEMPORAL_NAMESPACE
+    )
     worker = Worker(
         client,
         task_queue="encoding-task-queue",
@@ -48,25 +49,6 @@ async def main():
         workflows=[E2EWorkflow],
         activities=[],
     )
-    # stitch_audio_worker = Worker(
-    #     client,
-    #     task_queue="stitch-audio-task-queue",
-    #     workflows=[StitchAudioWorkflow],
-    #     activities=[stitch_audio],
-    # )
-
-    # clone_voice_worker = Worker(
-    #     client,
-    #     task_queue="clone-voice-task-queue",
-    #     workflows=[CloneVoiceWorkflow],
-    #     activities=[clone_voice],
-    # )
-    # delete_voice_worker = Worker(
-    #     client,
-    #     task_queue="delete-voice-task-queue",
-    #     workflows=[DeleteVoiceWorkflow],
-    #     activities=[delete_voice],
-    # )
 
     futures = [
         worker.run(),
