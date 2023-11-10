@@ -241,10 +241,14 @@ class CoreWorkflow:
         )
 
         print("output file:", output_file)
+        output_to_upload = {
+            'folder': "",
+            'local_file_path': output_file
+        }
 
         s3_url = await workflow.execute_activity(
             upload_file_to_s3, 
-            output_file,
+            output_to_upload,
             start_to_close_timeout=timedelta(minutes=10)
         )
         print("output s3_url:", s3_url)
