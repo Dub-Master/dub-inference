@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  web_app:
+    image: mbuleandra/dub-web
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend_api
+
+  backend_api:
+    image: mbuleandra/dub-api
+    ports:
+      - "8000:8000"
+    environment:
+      - TEMPORAL_URL=temporalio:7233
+      - TEMPORAL_NAMESPACE=default
+      - AWS_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_S3_BUCKET=dub-master
+      - AWS_ACCESS_KEY_ID=aws_access_key_id
+      - AWS_SECRET_ACCESS_KEY=aws_secret_access_key
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/dub
+    depends_on:
+      - temporalio
+      - postgres
+      - minio
+
+  postgres:
+    image: postgres:13.1
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=dub
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+
+  worker_service:
+    image: mbuleandra/dub-worker-cpu
+    environment:
+      - TEMPORAL_URL=temporalio:7233
+      - TEMPORAL_NAMESPACE=default
+      - OPENAI_API_KEY=open_api_key
+      - ELEVEN_LABS_API_KEY=eleven_api_key
+      - AWS_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_S3_BUCKET=dub-master
+      - AWS_ACCESS_KEY_ID=aws_access_key_id
+      - AWS_SECRET_ACCESS_KEY=aws_secret_access_key
+    depends_on:
+      - temporalio
+      - minio
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+    environment:
+      - MINIO_ACCESS_KEY=aws_access_key_id
+      - MINIO_SECRET_KEY=aws_secret_access_key
+    volumes:
+      - ./data:/data
+    command: server /data
+
+  temporalio:
+    container_name: temporal
+    depends_on:
+      - postgres
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PWD=postgres
+      - POSTGRES_SEEDS=postgresql
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+      - TEMPORAL_ADDRESS=temporalio:7233
+    image: temporalio/auto-setup:1.22.1
+    ports:
+      - 7233:7233
+    volumes:
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
