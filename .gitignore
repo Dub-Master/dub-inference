@@ -6,3 +6,7 @@
 *.part
 venv/
 *.mp3
+
+data/
+postgres-data/
+dynamicconfig/
