@@ -1,0 +1,9 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY pipeline/workers/encoding /app
+COPY pipeline/workers/common /app/common
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+CMD ["python", "run_worker.py"]
