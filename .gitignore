@@ -7,6 +7,6 @@
 venv/
 *.mp3
 
-data/
+minio-data/
 postgres-data/
-dynamicconfig/
+.env

@@ -1,71 +1,22 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  web_app:
-    image: mbuleandra/dub-web
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend_api
-
-  backend_api:
-    image: mbuleandra/dub-api
-    ports:
-      - "8000:8000"
+  postgresql:
+    container_name: postgresql
     environment:
-      - TEMPORAL_URL=temporalio:7233
-      - TEMPORAL_NAMESPACE=default
-      - AWS_S3_ENDPOINT_URL=http://minio:9000
-      - AWS_S3_BUCKET=dub-master
-      - AWS_ACCESS_KEY_ID=aws_access_key_id
-      - AWS_SECRET_ACCESS_KEY=aws_secret_access_key
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/dub
-    depends_on:
-      - temporalio
-      - postgres
-      - minio
-
-  postgres:
-    image: postgres:13.1
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: dub
+    image: postgres:13
     ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=dub
+      - 5432:5432
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - /var/lib/postgresql/data
 
-  worker_service:
-    image: mbuleandra/dub-worker-cpu
-    environment:
-      - TEMPORAL_URL=temporalio:7233
-      - TEMPORAL_NAMESPACE=default
-      - OPENAI_API_KEY=open_api_key
-      - ELEVEN_LABS_API_KEY=eleven_api_key
-      - AWS_S3_ENDPOINT_URL=http://minio:9000
-      - AWS_S3_BUCKET=dub-master
-      - AWS_ACCESS_KEY_ID=aws_access_key_id
-      - AWS_SECRET_ACCESS_KEY=aws_secret_access_key
-    depends_on:
-      - temporalio
-      - minio
-
-  minio:
-    image: minio/minio
-    ports:
-      - "9000:9000"
-    environment:
-      - MINIO_ACCESS_KEY=aws_access_key_id
-      - MINIO_SECRET_KEY=aws_secret_access_key
-    volumes:
-      - ./data:/data
-    command: server /data
-
-  temporalio:
+  temporal:
     container_name: temporal
     depends_on:
-      - postgres
+      - postgresql
     environment:
       - DB=postgresql
       - DB_PORT=5432
@@ -73,9 +24,86 @@ services:
       - POSTGRES_PWD=postgres
       - POSTGRES_SEEDS=postgresql
       - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
-      - TEMPORAL_ADDRESS=temporalio:7233
     image: temporalio/auto-setup:1.22.1
     ports:
       - 7233:7233
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+
+  temporal-admin-tools:
+    container_name: temporal-admin-tools
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    image: temporalio/admin-tools:1.22.1
+    stdin_open: true
+    tty: true
+
+  temporal-ui:
+    container_name: temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    image: temporalio/ui:2.21.0
+    ports:
+      - 8080:8080
+
+  minio:
+    container_name: minio
+    image: minio/minio
+    ports:
+      - 9000:9000
+    environment:
+      - MINIO_ACCESS_KEY=aws_access_key_id
+      - MINIO_SECRET_KEY=aws_secret_access_key
+    volumes:
+      - ./minio-data:/data
+    command: server /data
+
+  dub-api:
+    container_name: dub-api
+    image: mbuleandra/dub-api
+    ports:
+      - 8000:80
+    environment:
+      - TEMPORAL_URL=temporal:7233
+      - TEMPORAL_NAMESPACE=default
+      - AWS_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_S3_BUCKET=dub-master
+      - AWS_ACCESS_KEY_ID=aws_access_key_id
+      - AWS_SECRET_ACCESS_KEY=aws_secret_access_key
+      - DATABASE_URL=postgresql://postgres:postgres@postgresql:5432/dub
+    depends_on:
+      - postgresql
+      - temporal
+      - minio
+
+  dub-web:
+    container_name: dub-web
+    image: mbuleandra/dub-web
+    ports:
+      - 3000:80
+    environment:
+      - API_URL=http://dub-api
+    depends_on:
+      - dub-api
+
+  dub-worker-cpu:
+    container_name: dub-worker-cpu
+    image: mbuleandra/dub-worker-cpu
+    environment:
+      - TEMPORAL_URL=temporal:7233
+      - TEMPORAL_NAMESPACE=default
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ELEVEN_LABS_API_KEY=${ELEVEN_LABS_API_KEY}
+      - AWS_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_S3_BUCKET=dub-master
+      - AWS_ACCESS_KEY_ID=aws_access_key_id
+      - AWS_SECRET_ACCESS_KEY=aws_secret_access_key
+    depends_on:
+      - temporal
+      - minio
